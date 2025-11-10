@@ -36,6 +36,18 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/search', async (req, res) => {
+      const search = req.query.search;
+      const result = await habitsCollection.find({ title: {$regex: search, $options: 'i' }}).toArray();
+      res.send(result)
+    })
+
+    app.get('/filter', async (req, res) => {
+      const filter = req.query.filter;
+      const result = await habitsCollection.find({ category: filter}).toArray();
+      res.send(result)
+    })
+
     app.post('/habits', async (req, res) => {
       const habit = req.body;
       const newHabit = {
