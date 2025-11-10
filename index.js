@@ -30,6 +30,13 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/habits/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const result = await habitsCollection.findOne(filter);
+      res.send(result);
+    })
+
     app.get('/latest-habits', async (req, res) => {
       const sortFields = { createdAt: -1 };
       const result = await habitsCollection.find().sort(sortFields).limit(6).toArray();
@@ -80,13 +87,32 @@ async function run() {
       res.send(result)
     })
 
-    // delete api
+    // habit delete api
     app.delete('/habits/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await habitsCollection.deleteOne(filter)
       res.send(result)
     })
+
+  app.patch("/habits/:id/complete", async (req, res) => {
+  const id = req.params.id;
+  const today = new Date().toISOString().split("T")[0];
+  const filter = { _id: new ObjectId(id) };
+  const habit = await habitsCollection.findOne(filter);
+  if (!habit) {
+    return res.status(404).send({ message: "Habit not found" });
+  }
+  if (habit.completionHistory.includes(today)) {
+    return res.send({ message: "Already completed today" });
+  }
+  const update = {
+    $push: { completionHistory: today }
+  };
+  const result = await habitsCollection.updateOne(filter, update);
+  res.send(result);
+});
+
 
 
 
