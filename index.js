@@ -80,6 +80,7 @@ async function run() {
       res.send(result)
     })
 
+    // delete api
     app.delete('/habits/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
