@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster1.oqbd1pk.mongodb.net/?appName=Cluster1`;
 
 const client = new MongoClient(uri, {
@@ -36,6 +36,16 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/my-habits', async (req, res) => {
+      const email = req.query.email;
+      const filter = {}
+      if (email) {
+        filter.userEmail = email
+      }
+      const result = await habitsCollection.find(filter).toArray()
+      res.send(result)
+    })
+
     app.get('/search', async (req, res) => {
       const search = req.query.search;
       const result = await habitsCollection.find({ title: {$regex: search, $options: 'i' }}).toArray();
@@ -58,6 +68,26 @@ async function run() {
       const result = await habitsCollection.insertOne(newHabit);
       res.send(result);
     })
+
+    app.patch('/habits/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedHabit = req.body;  
+      const filter = {_id: new ObjectId(id)}
+      const update = {
+        $set: updatedHabit
+      }
+      const result = await habitsCollection.updateOne(filter, update)
+      res.send(result)
+    })
+
+    app.delete('/habits/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await habitsCollection.deleteOne(filter)
+      res.send(result)
+    })
+
+
 
     await client.connect();
     await client.db("admin").command({ ping: 1 });
