@@ -1,11 +1,38 @@
 const express = require('express')
 const cors = require('cors');
+const admin = require("firebase-admin");
 require('dotenv').config();
 const app = express()
 const port = process.env.PORT || 3000
 
+
+const serviceAccount = require("./habit-tracker-firebase-config.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
 app.use(cors());
 app.use(express.json());
+
+const verifyFirebaseToken = async (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ message: 'unauthorized access' });
+  }
+  const token = authorization.split(' ')[1]
+  if (!token) {
+    return res.status(401).send({ message: 'unauthorized access' }); 
+  }
+  
+  try {
+    await admin.auth().verifyIdToken(token)
+    next()
+  } catch (error) {
+    return res.status(401).send({ message: 'unauthorized access' });
+  }
+}
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -30,7 +57,7 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/habits/:id', async (req, res) => {
+    app.get('/habits/:id', verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)}
       const result = await habitsCollection.findOne(filter);
@@ -43,7 +70,7 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/my-habits', async (req, res) => {
+    app.get('/my-habits', verifyFirebaseToken, async (req, res) => {
       const email = req.query.email;
       const filter = {}
       if (email) {
