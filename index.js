@@ -53,6 +53,7 @@ async function run() {
     const habitsCollection = database.collection("habit");
 
     app.get('/habits', async (req, res) => {
+      const filter = {isPublic: }
       const result = await habitsCollection.find().toArray();
       res.send(result)
     })
